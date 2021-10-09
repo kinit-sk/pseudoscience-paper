@@ -103,7 +103,7 @@ We suggest the use of <a href="https://robomongo.org/">Robo3T</a> as a user inte
 ```bash
 pip install youtube-dl
 ```
-**Make use of ```youtube-dl``` wisely, carefully sending requests so that you do not spam YouTube with requests and get blocked.
+**Make use of ```youtube-dl``` wisely, carefully sending requests so that you do not spam YouTube with requests and get blocked.**
 
 #### Install Google APIs Client library for Python
 This is the library utilized to call the YouTube Data API from Python
@@ -118,21 +118,21 @@ Our codebase uses HTTPS Proxies for multiple purposes:
   This is mainly to ensure that all User Profiles used in our framework have the same geolocation and avoid changes to our results due to geolocation personalization.
 
 You can either use your own HTTPS Proxies or buy some online and set them in the following files:
-- ```youtubeauditframework/userprofiles/info/user_profiles_info.json```: Includes the HTTPS Proxies used to simulate distinct logged-in user profiles accessing YouTube from specific geolocations. 
+- `youtubeauditframework/userprofiles/info/user_profiles_info.json`: Includes the HTTPS Proxies used to simulate distinct logged-in user profiles accessing YouTube from specific geolocations. 
   Preferrably, according to our Audit framework, all HTTPS Proxies set in this file MUST be from similar locations (e.g., "US-San Fransisco-California"). 
-- ```youtubehelpers/config/YouTubeAPIConfig.py```: Includes the HTTPS Proxies used to download the transcript of YouTube videos using ```youtube-dl```.
+- `youtubehelpers/config/YouTubeAPIConfig.py`: Includes the HTTPS Proxies used to download the transcript of YouTube videos using `youtube-dl`.
 
 ### YouTube Data API
 Our codebase uses the YouTube Data API to download video metadata and for many other purposes like searching YouTube. 
 Hence, it is important that you create an API key for the YouTube Data API and set it in the configuration files of our codebase.
 You can enable the YouTube Data API for your Google account and obtain an API key following the steps <a href="https://developers.google.com/youtube/v3/getting-started">here</a>.
 
-Once you have a **YouTube Data API Key**, please set the ```YOUTUBE_DATA_API_KEY``` variable in the following files:
+Once you have a **YouTube Data API Key**, please set the `YOUTUBE_DATA_API_KEY` variable in the following files:
 
-- ```youtubehelpers/config/YouTubeAPIConfig.py```
+- `youtubehelpers/config/YouTubeAPIConfig.py`
   
 
-- ```youtubeauditframework/utils/YouTubeAuditFrameworkConfig.py```
+- `youtubeauditframework/utils/YouTubeAuditFrameworkConfig.py`
 
 
 # Part 1: Detection of Pseudoscientific Videos
@@ -175,13 +175,13 @@ unzip wiki-news-300d-1M.vec.zip
 
 ### 1.2.2. Create MongoDB Database and Collections
 
-1. Create a MongoDB database called: ```youtube_pseudoscience_dataset``` either using Robo3T GUI or from the terminal.
+1. Create a MongoDB database called: `youtube_pseudoscience_dataset` either using Robo3T GUI or from the terminal.
 
 
-2. Create the following MongoDB collections under the ```youtube_pseudoscience_dataset``` database that you just created:
-- ```groundtruth_videos```
-- ```groundtruth_videos_comments```
-- ```groundtruth_videos_transcripts```
+2. Create the following MongoDB collections under the `youtube_pseudoscience_dataset` database that you just created:
+- `groundtruth_videos`
+- `groundtruth_videos_comments`
+- `groundtruth_videos_transcripts`
 
 **Note:** If you are using our <a href="https://zenodo.org/record/4558469#.YDfBCmr7Rqs">dataset</a> please make sure that you create the appropriate MongoDB collections and import the data in each collection. 
 
@@ -200,7 +200,7 @@ This step is only required to run once.
 
 ### Step B. Train the Pseudoscience Deep Learning Model
 At this step, we train and validate the Pseudoscientific Content Detection Deep Learning model using 10-fold cross-validation.
-At the end of the training, the best model will be stored in: ```pseudoscientificvideosdetection\models\pseudoscience_model_final.hdf5```.
+At the end of the training, the best model will be stored in: `pseudoscientificvideosdetection\models\pseudoscience_model_final.hdf5`.
 We provide below an example of how you can use our codebase to train the Pseudoscientific Content Detection classifier.
 
 ### Classifier Training Example:
