@@ -10,7 +10,7 @@ import numpy as np
 import pickle
 import itertools
 from tqdm import tqdm
-from keras.utils import to_categorical
+from tensorflow.keras.utils import to_categorical
 
 import contractions
 from bs4 import BeautifulSoup
@@ -53,7 +53,7 @@ class DatasetUtils(object):
         self.VIDEO_COMMENTS_FEATURES_FILENAME = 'dataset/data/video_comments_features.p'
 
         # CLASSES
-        self.classes = ['science', 'pseudoscience']
+        self.classes = ['debunking', 'promoting', 'neutral']
 
         # Get Ground-truth Videos
         self.GROUNDTRUTH_VIDEOS = self.get_groundtruth_videos()
@@ -94,7 +94,7 @@ class DatasetUtils(object):
         Method that returns the ids of the Ground-truth videos
         :return:
         """
-        groundtruth_videos = self.groundtruth_videos_col.find({}, {'id': 1})
+        groundtruth_videos = self.groundtruth_videos_col.find({'annotation.label': {'$in': ['promoting', 'debunking', 'neutral']}})
         return [video['id'] for video in groundtruth_videos]
 
     def get_groundtruth_labels(self):
@@ -102,27 +102,17 @@ class DatasetUtils(object):
         Method that returns the labels of our Ground Truth Videos
         :return:
         """
-        groundtruth_videos = self.groundtruth_videos_col.find({}, {'id': 1, 'classification': 1})
+        groundtruth_videos = self.groundtruth_videos_col.find({'annotation.label': {'$in': ['promoting', 'debunking', 'neutral']}})
+
+        label_mapping = {
+            'promoting': 'promoting',
+            'debunking': 'debunking',
+            'neutral': 'debunking'
+        }
 
         video_labels = list()
-        science_videos = 0
-        pseudoscience_videos = 0
-        irrelevant_videos = 0
         for video in groundtruth_videos:
-            # Find the correct label
-            if video['classification']['classification_category'] == 'science':
-                science_videos += 1
-            elif video['classification']['classification_category'] == 'pseudoscience':
-                pseudoscience_videos += 1
-            elif video['classification']['classification_category'] == 'irrelevant':
-                irrelevant_videos += 1
-
-            # Add Video details
-            if video['classification']['classification_category'] == 'irrelevant':
-                video_labels.append('science')
-            else:
-                video_labels.append(video['classification']['classification_category'])
-        print('\n\n--- [GROUND TRUTH VIDEOS] SCIENCE: {} | PSEUDOSCIENCE: {}'.format(science_videos+irrelevant_videos, pseudoscience_videos))
+            video_labels.append(label_mapping[video['annotation']['label']])
         return video_labels
 
     def get_groundtruth_labels_one_hot_encoded(self, perform_one_hot=True):
@@ -131,8 +121,13 @@ class DatasetUtils(object):
         :param perform_one_hot:
         :return:
         """
-        groundtruth_videos = self.groundtruth_videos_col.find({}, {'id': 1, 'classification': 1})
-        ground_truth_labels = [video['classification']['classification_category'] for video in groundtruth_videos]
+        groundtruth_videos = self.groundtruth_videos_col.find({'annotation.label': {'$in': ['promoting', 'debunking', 'neutral']}})
+        label_mapping = {
+            'promoting': 'promoting',
+            'debunking': 'debunking',
+            'neutral': 'debunking'
+        }
+        ground_truth_labels = [label_mapping[video['annotation']['label']] for video in groundtruth_videos]
 
         final_groundtruth_labels = list()
         for label in ground_truth_labels:

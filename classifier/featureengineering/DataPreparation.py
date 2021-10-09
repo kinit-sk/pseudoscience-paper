@@ -5,8 +5,8 @@ import fasttext
 import numpy as np
 import os
 import pickle
-from keras.preprocessing.text import Tokenizer
-from keras.preprocessing.sequence import pad_sequences
+from tensorflow.keras.preprocessing.text import Tokenizer
+from tensorflow.keras.preprocessing.sequence import pad_sequences
 from tqdm import tqdm
 from joblib import Parallel, delayed
 
@@ -102,7 +102,7 @@ class DataPreparation(object):
             video_transcripts_raw = self.DATASET.get_video_transcript_features()
 
             # Load fine-tuned fastText Model
-            video_transcript_fasttext_model = fasttext.load_model(path='{0}/model_unsupervised_video_transcript.bin'.format(self.FEATURE_ENGINEERING_MODELS_DIR))
+            video_transcript_fasttext_model = fasttext.load_model(path='{0}/fasttext_model_video_snippet.bin'.format(self.FEATURE_ENGINEERING_MODELS_DIR))
 
             # Generate a single Embedding Vector for each Video Transcript
             video_transcript_features = list()
@@ -136,7 +136,7 @@ class DataPreparation(object):
             final_video_comments_raw = [' '.join(video_comments) for video_comments in video_comments_raw]
 
             # Load fine-tuned fastText Model
-            video_comments_fasttext_model = fasttext.load_model(path='{0}/model_unsupervised_video_comments.bin'.format(self.FEATURE_ENGINEERING_MODELS_DIR))
+            video_comments_fasttext_model = fasttext.load_model(path='{0}/fasttext_model_video_comments.bin'.format(self.FEATURE_ENGINEERING_MODELS_DIR))
 
             # Generate a single Embedding Vector for each Video Comments
             video_comments_features = [video_comments_fasttext_model.get_sentence_vector(text=video_comments_merged) for video_comments_merged in final_video_comments_raw]

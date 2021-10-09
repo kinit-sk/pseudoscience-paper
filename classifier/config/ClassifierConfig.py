@@ -10,7 +10,7 @@ class Config(object):
     # Enable/Disable Model Branches
     INPUT_FEATURES_CONFIG = {
         "video_snippet": True,
-        "video_tags": True,
+        "video_tags": False,
         "video_transcript": True,
         "video_comments": True,
     }
@@ -24,7 +24,7 @@ class Config(object):
     # Train Model Config
     SHUFFLE_TRAIN_SET = True
     OVERSAMPLING = True
-    VALIDATION_SPLIT_SIZE = 0.2
+    VALIDATION_SPLIT_SIZE = 0.1
 
     TOTAL_KFOLDS = 10  # number of k-folds (cross-validation)
     NB_EPOCHS = 100
