@@ -131,3 +131,12 @@ dmypy.json
 #/pseudoscientificvideosdetection/models/pseudoscience_model_final.hdf5
 .idea/
 .DS_Store
+
+yaudit-data/comments/
+yaudit-data/*.json
+yaudit-data/*.txt
+yaudit-data/*.p
+yaudit-data/*.pickle
+*.pickle
+predictions*.txt
+classifier/training/**/*.hdf5

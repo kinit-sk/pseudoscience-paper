@@ -12,4 +12,4 @@ featureEngineeringModels = FeatureEngineeringModels(dataset_object=dataset)
 # Create ClassifierTraining Object
 classifierTrainingObject = ClassifierTraining(dataset_object=dataset)
 
-classifierTrainingObject.train_model()
+classifierTrainingObject.train_model_no_cv()

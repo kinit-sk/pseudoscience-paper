@@ -28,7 +28,8 @@ class PseudoscienceClassifier(object):
 
         # Initialize Variables
         self.NB_CLASSES = 2
-        self.CLASSES = ['science', 'pseudoscience']
+        # self.CLASSES = ['science', 'pseudoscience']
+        self.CLASSES = ['debunking', 'promoting']
 
         # Create a Dataset Object
         self.DATASET = DatasetUtils()
@@ -36,21 +37,22 @@ class PseudoscienceClassifier(object):
         # Set the base directory of the FastText Classifiers
         self.FASTTEXT_MODELS_DIR = 'pseudoscientificvideosdetection/models/feature_extraction'
         # Load FastText Classifiers
-        if not os.path.isfile('{0}/model_unsupervised_video_snippet.bin'.format(self.FASTTEXT_MODELS_DIR)):
+        if not os.path.isfile('{0}/fasttext_model_video_snippet.bin'.format(self.FASTTEXT_MODELS_DIR)):
             exit('Cannot find fasttext feature extractor for VIDEO SNIPPET')
-        self.FASTTEXT_VIDEO_SNIPPET = fasttext.load_model(path='{0}/model_unsupervised_video_snippet.bin'.format(self.FASTTEXT_MODELS_DIR))
-        if not os.path.isfile('{0}/model_unsupervised_video_tags.bin'.format(self.FASTTEXT_MODELS_DIR)):
-            exit('Cannot find fasttext feature extractor for VIDEO TAGS')
-        self.FASTTEXT_VIDEO_TAGS = fasttext.load_model(path='{0}/model_unsupervised_video_tags.bin'.format(self.FASTTEXT_MODELS_DIR))
-        if not os.path.isfile('{0}/model_unsupervised_video_transcript.bin'.format(self.FASTTEXT_MODELS_DIR)):
+        self.FASTTEXT_VIDEO_SNIPPET = fasttext.load_model(path='{0}/fasttext_model_video_snippet.bin'.format(self.FASTTEXT_MODELS_DIR))
+        # if not os.path.isfile('{0}/model_unsupervised_video_tags.bin'.format(self.FASTTEXT_MODELS_DIR)):
+        #     exit('Cannot find fasttext feature extractor for VIDEO TAGS')
+        # self.FASTTEXT_VIDEO_TAGS = fasttext.load_model(path='{0}/model_unsupervised_video_tags.bin'.format(self.FASTTEXT_MODELS_DIR))
+        if not os.path.isfile('{0}/fasttext_model_video_transcript.bin'.format(self.FASTTEXT_MODELS_DIR)):
             exit('Cannot find fasttext feature extractor for VIDEO TRANSCRIPT')
-        self.FASTTEXT_VIDEO_TRANSCRIPT = fasttext.load_model(path='{0}/model_unsupervised_video_transcript.bin'.format(self.FASTTEXT_MODELS_DIR))
-        if not os.path.isfile('{0}/model_unsupervised_video_comments.bin'.format(self.FASTTEXT_MODELS_DIR)):
+        self.FASTTEXT_VIDEO_TRANSCRIPT = fasttext.load_model(path='{0}/fasttext_model_video_transcript.bin'.format(self.FASTTEXT_MODELS_DIR))
+        if not os.path.isfile('{0}/fasttext_model_video_comments.bin'.format(self.FASTTEXT_MODELS_DIR)):
             exit('Cannot find fasttext feature extractor for VIDEO COMMENTS')
-        self.FASTTEXT_VIDEO_COMMENTS = fasttext.load_model(path='{0}/model_unsupervised_video_comments.bin'.format(self.FASTTEXT_MODELS_DIR))
+        self.FASTTEXT_VIDEO_COMMENTS = fasttext.load_model(path='{0}/fasttext_model_video_comments.bin'.format(self.FASTTEXT_MODELS_DIR))
 
         # Load the Pseudoscience Classifier
         self.pseudoscience_model_filename = 'pseudoscientificvideosdetection/models/pseudoscience_model_final.hdf5'
+        # self.pseudoscience_model_filename = 'classifier/training/temp/K=1_pseudoscience_model.hdf5'
         if not os.path.isfile(self.pseudoscience_model_filename):
             exit('Cannot find a trained Pseudoscience Classifier')
         self.PSEUDOSCIENCE_CLASSIFIER = load_model(self.pseudoscience_model_filename)
@@ -65,11 +67,11 @@ class PseudoscienceClassifier(object):
         Ensure that you free some memory by deleting all the loaded models
         :return:
         """
-        del self.FASTTEXT_VIDEO_SNIPPET
-        del self.FASTTEXT_VIDEO_TAGS
-        del self.FASTTEXT_VIDEO_TRANSCRIPT
-        del self.FASTTEXT_VIDEO_COMMENTS
-        del self.PSEUDOSCIENCE_CLASSIFIER
+        # del self.FASTTEXT_VIDEO_SNIPPET
+        # del self.FASTTEXT_VIDEO_TAGS
+        # del self.FASTTEXT_VIDEO_TRANSCRIPT
+        # del self.FASTTEXT_VIDEO_COMMENTS
+        # del self.PSEUDOSCIENCE_CLASSIFIER
         return
 
     @staticmethod
@@ -108,14 +110,14 @@ class PseudoscienceClassifier(object):
         X_video_snippet = self.FASTTEXT_VIDEO_SNIPPET.get_sentence_vector(text=video_snippet)
 
         # --- VIDEO TAGS
-        video_tags = ""
-        if self.key_exists(video_details, 'tags', 'tags') and len(video_details['snippet']['tags']) > 0:
-            video_tags = ' '.join(video_details['snippet']['tags'])
-        # Preprocess Video Tags
-        if video_tags != "":
-            video_tags = self.DATASET.preprocess_text(text=video_tags)
-        # Get Embedding
-        X_video_tags = self.FASTTEXT_VIDEO_TAGS.get_sentence_vector(text=video_tags)
+        # video_tags = ""
+        # if self.key_exists(video_details, 'tags', 'tags') and len(video_details['snippet']['tags']) > 0:
+        #     video_tags = ' '.join(video_details['snippet']['tags'])
+        # # Preprocess Video Tags
+        # if video_tags != "":
+        #     video_tags = self.DATASET.preprocess_text(text=video_tags)
+        # # Get Embedding
+        # X_video_tags = self.FASTTEXT_VIDEO_TAGS.get_sentence_vector(text=video_tags)
 
         # --- VIDEO TRANSCRIPT
         video_transcript = self.DATASET.read_video_transcript(video_id=video_details['id'])
@@ -131,7 +133,9 @@ class PseudoscienceClassifier(object):
 
         """ Classify Video """
         # Create Classifier Input
-        classifier_input = [[X_video_snippet], [X_video_tags], [X_video_transcript], [X_video_comments]]
+        classifier_input = [[X_video_snippet.reshape(1, -1)],
+        # [X_video_tags],
+        [X_video_transcript.reshape(1, -1)], [X_video_comments.reshape(1, -1)]]
 
         # Perform Classification
         predicted_proba = self.PSEUDOSCIENCE_CLASSIFIER.predict(classifier_input, batch_size=1)
@@ -158,5 +162,5 @@ class PseudoscienceClassifier(object):
         # print('--- [VIDEO_ID: {}] PREDICTED CLASS: {}, PROBAS: [{}, {}]\n'.format(video_details['id'], predicted_class.upper(), science_proba, pseudoscience_proba))
 
         # Find the appropriate Confidence Score
-        conf_score = science_proba if predicted_class == 'science' else pseudoscience_proba
+        conf_score = science_proba if predicted_class == 'debunking' else pseudoscience_proba
         return predicted_class, conf_score

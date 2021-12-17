@@ -362,6 +362,124 @@ class ClassifierTraining(object):
                  dst='{0}/K={1}_pseudoscience_model.hdf5'.format(self.BEST_MODEL_BASE_DIR, best_kfold))
         return
 
+    def train_model_no_cv(self):
+        """
+        Method that trains, stores and tests the Pseudoscience Deep Learning Model
+        using K-Fold Cross-Validation. This method will store K trained variances of
+        the model in the current directory and in the end will create a copy of the
+        best model in 'pseudoscientificvideosdetection/models/' directory
+        :return:
+        """
+        print('/n---Training the Model with {} videos.'.format(len(self.dataset_videos)))
+
+        # Initialize training variables
+        mean_tpr = 0.0
+        mean_fpr = np.linspace(0, 1, 100)
+        kfold_counter = 1
+        folds_predicted_probas, folds_performance_metrics, folds_confusion_matrices = list(), list(), list()
+        stratified_kfold = StratifiedKFold(n_splits=Config.TOTAL_KFOLDS, shuffle=True, random_state=None)
+
+        train_val_set_indices = list(range(len(self.dataset_videos)))
+
+        # Train/Test Model with K-Fold Cross Vaildation
+        print('\n--- [K-FOLD %d/%d] TRAIN: %d' % (kfold_counter, Config.TOTAL_KFOLDS, len(train_val_set_indices)))
+
+        """ TRAIN SET """
+        # VIDEO SNIPPET
+        X_train_val_snippet = np.take(self.video_snippet_features, indices=train_val_set_indices, axis=0)
+        # VIDEO TAGS
+        # X_train_val_video_tags = np.take(self.video_tags_features, indices=train_val_set_indices, axis=0)
+        # VIDEO TRANSCRIPT
+        X_train_val_transcript = np.take(self.video_transcript_features, indices=train_val_set_indices, axis=0)
+        # VIDEO COMMENTS
+        X_train_val_comments = np.take(self.video_comments_features, indices=train_val_set_indices, axis=0)
+
+        # VIDEO LABELS
+        Y_train_val_labels = np.take(self.dataset_labels, indices=train_val_set_indices, axis=0)
+        Y_train_val_one_hot = np.take(self.dataset_labels_one_hot, indices=train_val_set_indices, axis=0)
+        Y_train_val_categorical = np.take(self.dataset_labels_categorical, indices=train_val_set_indices, axis=0)
+
+        """ TRAIN & VALIDATION SETS """
+        indices_train, indices_val = self.DATASET.split_train_test_sets_stratified(labels=Y_train_val_categorical, test_size=Config.VALIDATION_SPLIT_SIZE)
+
+        # VIDEO SNIPPET
+        X_train_snippet = np.take(X_train_val_snippet, indices=indices_train, axis=0)
+        X_val_snippet = np.take(X_train_val_snippet, indices=indices_val, axis=0)
+        # VIDEO TAGS
+        # X_train_video_tags = np.take(X_train_val_video_tags, indices=indices_train, axis=0)
+        # X_val_video_tags = np.take(X_train_val_video_tags, indices=indices_val, axis=0)
+        # VIDEO TRANSCRIPT
+        X_train_transcript = np.take(X_train_val_transcript, indices=indices_train, axis=0)
+        X_val_transcript = np.take(X_train_val_transcript, indices=indices_val, axis=0)
+        # VIDEO COMMENTS
+        X_train_comments = np.take(X_train_val_comments, indices=indices_train, axis=0)
+        X_val_comments = np.take(X_train_val_comments, indices=indices_val, axis=0)
+
+        # VIDEO LABELS
+        Y_val_labels = np.take(Y_train_val_labels, indices=indices_val, axis=0)
+        Y_train_one_hot = np.take(Y_train_val_one_hot, indices=indices_train, axis=0)
+        Y_val_one_hot = np.take(Y_train_val_one_hot, indices=indices_val, axis=0)
+        Y_train_categorical = np.take(Y_train_val_categorical, indices=indices_train, axis=0)
+        # Y_val_categorical = np.take(Y_train_val_categorical, indices=indices_val, axis=0)
+
+        """ OVERSAMPLING """
+        if Config.OVERSAMPLING:
+            print('--- Oversampling Train set...')
+            smote = SMOTE(sampling_strategy='not majority')
+
+            # Oversample VIDEO SNIPPET
+            X_train_snippet, Y_train_s = smote.fit_resample(X_train_snippet, Y_train_categorical)
+            # X_train_video_tags, Y_train_s = smote.fit_resample(X_train_video_tags, Y_train_categorical)
+            X_train_transcript, Y_train_s = smote.fit_resample(X_train_transcript, Y_train_categorical)
+            X_train_comments, Y_train_s = smote.fit_resample(X_train_comments, Y_train_categorical)
+            Y_train_oversampled = np.array([to_categorical(label, Config.NB_CLASSES) for label in Y_train_s])
+            print('--- [AFTER OVER-SAMPLING] TRAIN: %d, VAL: %d' % (Y_train_oversampled.shape[0], Y_val_labels.shape[0]))
+        else:
+            Y_train_oversampled = Y_train_one_hot
+
+        """ TRAIN THE MODEL """
+        # TRAIN SET INPUT
+        model_train_input = list()
+        if Config.INPUT_FEATURES_CONFIG['video_snippet']:
+            model_train_input.append(X_train_snippet)
+        # if Config.INPUT_FEATURES_CONFIG['video_tags']:
+        #     model_train_input.append(X_train_video_tags)
+        if Config.INPUT_FEATURES_CONFIG['video_transcript']:
+            model_train_input.append(X_train_transcript)
+        if Config.INPUT_FEATURES_CONFIG['video_comments']:
+            model_train_input.append(X_train_comments)
+
+        # VALIDATION SET INPUT
+        model_val_input = list()
+        if Config.INPUT_FEATURES_CONFIG['video_snippet']:
+            model_val_input.append(X_val_snippet)
+        # if Config.INPUT_FEATURES_CONFIG['video_tags']:
+        #     model_val_input.append(X_val_video_tags)
+        if Config.INPUT_FEATURES_CONFIG['video_transcript']:
+            model_val_input.append(X_val_transcript)
+        if Config.INPUT_FEATURES_CONFIG['video_comments']:
+            model_val_input.append(X_val_comments)
+
+        # Load Deep Learning Model
+        print('\n--- Classifier Training started...')
+        model = self.DEEP_LEARNING_MODEL_OBJ.get_model()
+        print(len(model_train_input))
+        print(model_val_input)
+        model.fit(model_train_input,
+                    Y_train_oversampled,
+                    epochs=Config.NB_EPOCHS,
+                    batch_size=Config.BATCH_SIZE,
+                #   validation_data=[model_val_input, Y_val_one_hot],
+                    shuffle=Config.SHUFFLE_TRAIN_SET,
+                    verbose=1,
+                    callbacks=[self.early_stopper])
+
+        """ SAVE TRAINED MODEL """
+        print('\n---[K-FOLD {}] Model Training finished. Saving...'.format(kfold_counter))
+        final_model_store_path = '{0}/K={1}_pseudoscience_model.hdf5'.format(self.TRAINING_MODELS_BASE_DIR, kfold_counter)
+        # Save the whole Model with its weights
+        model.save(final_model_store_path)
+
     def store_kfold_predictions(self, y_true, predicted_probas, kfold_counter):
         """
         Method that stores the predicted probailities of a specific trained model for later use

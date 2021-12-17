@@ -28,12 +28,12 @@ class YouTubeVideoDownloader(object):
         self.YOUTUBE_API = build(self.YOUTUBE_API_SERVICE_NAME, self.YOUTUBE_API_VERSION, developerKey=self.YOUTUBE_API_KEY)
 
         """ HTTPS PROXIES """
-        self.HTTPS_PROXY_COUNTER = 0
-        self.HTTPS_PROXY_USED = 0
-        self.HTTPS_PROXY_REQUESTS = 0
-        self.HTTPS_PROXY = Config.HTTPS_PROXIES_LIST[self.HTTPS_PROXY_USED]
-        if self.HTTPS_PROXY == 'HOST:PORT':
-            exit('[ERROR] Please set correct HTTPS Proxies in youtubehelpers/config/YouTubeAPIConfig.py')
+        # self.HTTPS_PROXY_COUNTER = 0
+        # self.HTTPS_PROXY_USED = 0
+        # self.HTTPS_PROXY_REQUESTS = 0
+        # self.HTTPS_PROXY = Config.HTTPS_PROXIES_LIST[self.HTTPS_PROXY_USED]
+        # if self.HTTPS_PROXY == 'HOST:PORT':
+        #     exit('[ERROR] Please set correct HTTPS Proxies in youtubehelpers/config/YouTubeAPIConfig.py')
 
         """ Data Directories """
         self.VIDEO_TRANSCRIPT_BASE_DIR = 'videosdata/transcript'
@@ -66,13 +66,13 @@ class YouTubeVideoDownloader(object):
         :return:
         """
         # Change Proxy every 10 requests
-        if self.HTTPS_PROXY_REQUESTS % 10 == 0 or force_change:
-            self.HTTPS_PROXY_REQUESTS = 0
-            self.HTTPS_PROXY_COUNTER += 1
-            self.HTTPS_PROXY_USED = self.HTTPS_PROXY_COUNTER % len(Config.HTTPS_PROXIES_LIST)
+        # if self.HTTPS_PROXY_REQUESTS % 10 == 0 or force_change:
+        #     self.HTTPS_PROXY_REQUESTS = 0
+        #     self.HTTPS_PROXY_COUNTER += 1
+        #     self.HTTPS_PROXY_USED = self.HTTPS_PROXY_COUNTER % len(Config.HTTPS_PROXIES_LIST)
 
-            # Change the HTTP Proxy used
-            self.HTTPS_PROXY = Config.HTTPS_PROXIES_LIST[self.HTTPS_PROXY_USED]
+        #     # Change the HTTP Proxy used
+        #     self.HTTPS_PROXY = Config.HTTPS_PROXIES_LIST[self.HTTPS_PROXY_USED]
         return
 
     def get_recommended_videos(self, video_id):
@@ -143,8 +143,8 @@ class YouTubeVideoDownloader(object):
             # Send request to get video's information
             try:
                 response = self.YOUTUBE_API.videos().list(
-                    # part='id,snippet,contentDetails,statistics',
-                    part='id,snippet,contentDetails',
+                    part='id,snippet,contentDetails,statistics',
+                    # part='id,snippet,contentDetails',
                     id=video_id
                 ).execute()
 
@@ -197,7 +197,7 @@ class YouTubeVideoDownloader(object):
             os.umask(original_umask)
 
         # Call the download_video_comments.py script to get the given video_id's comments
-        os.system("python3 youtubescripts/download_video_comments.py {0} {1} {2} {3}".format(video_id, comments_dir, Config.LIMIT_PAGES_COMMENTS, self.YOUTUBE_API_KEY))
+        os.system("python3 youtubehelpers/youtubescripts/download_youtube_video_comments.py {0} {1} {2} {3}".format(video_id, comments_dir, Config.LIMIT_PAGES_COMMENTS, self.YOUTUBE_API_KEY))
         return
 
     def video_transcript_downloaded(self, video_id):
@@ -230,7 +230,7 @@ class YouTubeVideoDownloader(object):
 
         # Download Video Transcript
         try:
-            output = subprocess.check_output("bash youtubescripts/download_video_transcript.sh {0} {1} {2}".format(video_url, path, self.HTTPS_PROXY), shell=True)
+            output = subprocess.check_output("bash youtubehelpers/youtubescripts/download_video_transcript.sh {0} {1}".format(video_url, path), shell=True)
             if "HTTP_ERROR" in str(output):
                 return
             # Increase current HTTP Proxy usage
