@@ -1,5 +1,8 @@
 #!/usr/bin/python
 
+from decimal import Decimal
+from collections import Counter
+from typing import final
 from dataset.DatasetUtils import DatasetUtils
 from classifier.featureengineering.DataPreparation import DataPreparation
 from classifier.model.PseudoscienceDeepLearningModel import PseudoscienceDeepLearningModel
@@ -209,22 +212,10 @@ class ClassifierTraining(object):
             if Config.INPUT_FEATURES_CONFIG['video_comments']:
                 model_train_input.append(X_train_comments)
 
-            # VALIDATION SET INPUT
-            model_val_input = list()
-            if Config.INPUT_FEATURES_CONFIG['video_snippet']:
-                model_val_input.append(X_val_snippet)
-            # if Config.INPUT_FEATURES_CONFIG['video_tags']:
-            #     model_val_input.append(X_val_video_tags)
-            if Config.INPUT_FEATURES_CONFIG['video_transcript']:
-                model_val_input.append(X_val_transcript)
-            if Config.INPUT_FEATURES_CONFIG['video_comments']:
-                model_val_input.append(X_val_comments)
-
             # Load Deep Learning Model
             print('\n--- Classifier Training started...')
             model = self.DEEP_LEARNING_MODEL_OBJ.get_model()
-            print(len(model_train_input))
-            print(model_val_input)
+            print(Y_train_oversampled)
             model.fit(model_train_input,
                       Y_train_oversampled,
                       epochs=Config.NB_EPOCHS,
@@ -262,13 +253,28 @@ class ClassifierTraining(object):
             if Config.CLASSIFICATION_THRESHOLD is not None:
                 test_predicted_classes = list()
                 for predicted_probas in test_pred_proba:
-                    if predicted_probas[1] >= Config.CLASSIFICATION_THRESHOLD:
-                        test_predicted_classes.append(1)
+                    # if predicted_probas[1] >= Config.CLASSIFICATION_THRESHOLD:
+                    #     test_predicted_classes.append(1)
+                    # else:
+                    #     test_predicted_classes.append(0)
+
+                    # print(predicted_probas)
+                    max_i = predicted_probas.argmax()
+                    # print(max_i)
+                    probability = np.round(predicted_probas[max_i], decimals=3)
+                    # print(probability)
+                    if probability >= Config.CLASSIFICATION_THRESHOLD:
+                        test_predicted_classes.append(max_i)
                     else:
-                        test_predicted_classes.append(0)
+                        test_predicted_classes.append(2) # neutral
             else:
                 test_predicted_classes = test_pred_proba.argmax(axis=1)
 
+            print('actual')
+            print(Counter(Y_test_one_hot.argmax(axis=1)))
+            print('predicted')
+            print(Counter(test_predicted_classes))
+            print(confusion_matrix(Y_test_one_hot.argmax(axis=1), test_predicted_classes))
             """ Calculate Performance Metrics """
             # ACCURACY
             # test_accuracy_without_threshold = accuracy_score(Y_test_one_hot.argmax(axis=1), test_pred_proba.argmax(axis=1))
@@ -293,9 +299,9 @@ class ClassifierTraining(object):
             folds_predicted_probas.append(test_pred_proba)
 
             # Get ROC Metrics for the current fold
-            curr_fpr, curr_tpr, curr_threholds, curr_roc_auc = self.calc_roc_auc_curve_metrics(y_true=Y_test_one_hot, y_pred_proba=test_pred_proba)
-            mean_tpr += np.interp(mean_fpr, curr_fpr, curr_tpr)
-            mean_tpr[0] = 0.0
+            # curr_fpr, curr_tpr, curr_threholds, curr_roc_auc = self.calc_roc_auc_curve_metrics(y_true=Y_test_one_hot, y_pred_proba=test_pred_proba)
+            # mean_tpr += np.interp(mean_fpr, curr_fpr, curr_tpr)
+            # mean_tpr[0] = 0.0
 
             # Append current K-FOLD Performance Metrics to an array that wil later write in file
             folds_performance_metrics.append([test_accuracy, test_precision, test_recall, test_f1_score])
@@ -309,10 +315,10 @@ class ClassifierTraining(object):
             time.sleep(3)
 
         # Calculate Means for the ROC Curve and store them in a file
-        mean_tpr /= Config.TOTAL_KFOLDS
-        mean_tpr[-1] = 1.0
-        mean_auc = auc(mean_fpr, mean_tpr)
-        pickle.dump([mean_fpr, mean_tpr, mean_auc], file=open('{0}/roc_metrics.p'.format(self.TRAINING_MODELS_BASE_DIR), mode='wb'))
+        # mean_tpr /= Config.TOTAL_KFOLDS
+        # mean_tpr[-1] = 1.0
+        # mean_auc = auc(mean_fpr, mean_tpr)
+        # pickle.dump([mean_fpr, mean_tpr, mean_auc], file=open('{0}/roc_metrics.p'.format(self.TRAINING_MODELS_BASE_DIR), mode='wb'))
 
         """
         Calculate mean Accuracy, Precision, Recall, and F1 Score as well as their standard deviation
@@ -357,6 +363,13 @@ class ClassifierTraining(object):
         print('\n--- BEST CONFUSION MATRIX')
         print(folds_confusion_matrices[best_kfold - 1])
 
+        print()
+        print(folds_confusion_matrices)
+        print()
+
+        print('\n--- SUM OF CONFUSION MATRICES')
+        print(sum(folds_confusion_matrices))
+
         # Copy the best model to the proper folder
         copyfile(src='{0}/K={1}_pseudoscience_model.hdf5'.format(self.TRAINING_MODELS_BASE_DIR, best_kfold),
                  dst='{0}/K={1}_pseudoscience_model.hdf5'.format(self.BEST_MODEL_BASE_DIR, best_kfold))
@@ -372,54 +385,34 @@ class ClassifierTraining(object):
         """
         print('/n---Training the Model with {} videos.'.format(len(self.dataset_videos)))
 
-        # Initialize training variables
-        mean_tpr = 0.0
-        mean_fpr = np.linspace(0, 1, 100)
-        kfold_counter = 1
-        folds_predicted_probas, folds_performance_metrics, folds_confusion_matrices = list(), list(), list()
-        stratified_kfold = StratifiedKFold(n_splits=Config.TOTAL_KFOLDS, shuffle=True, random_state=None)
-
-        train_val_set_indices = list(range(len(self.dataset_videos)))
-
-        # Train/Test Model with K-Fold Cross Vaildation
-        print('\n--- [K-FOLD %d/%d] TRAIN: %d' % (kfold_counter, Config.TOTAL_KFOLDS, len(train_val_set_indices)))
 
         """ TRAIN SET """
         # VIDEO SNIPPET
-        X_train_val_snippet = np.take(self.video_snippet_features, indices=train_val_set_indices, axis=0)
+        X_train_val_snippet = self.video_snippet_features
         # VIDEO TAGS
         # X_train_val_video_tags = np.take(self.video_tags_features, indices=train_val_set_indices, axis=0)
         # VIDEO TRANSCRIPT
-        X_train_val_transcript = np.take(self.video_transcript_features, indices=train_val_set_indices, axis=0)
+        X_train_val_transcript = self.video_transcript_features
         # VIDEO COMMENTS
-        X_train_val_comments = np.take(self.video_comments_features, indices=train_val_set_indices, axis=0)
+        X_train_val_comments = self.video_comments_features
 
         # VIDEO LABELS
-        Y_train_val_labels = np.take(self.dataset_labels, indices=train_val_set_indices, axis=0)
-        Y_train_val_one_hot = np.take(self.dataset_labels_one_hot, indices=train_val_set_indices, axis=0)
-        Y_train_val_categorical = np.take(self.dataset_labels_categorical, indices=train_val_set_indices, axis=0)
-
-        """ TRAIN & VALIDATION SETS """
-        indices_train, indices_val = self.DATASET.split_train_test_sets_stratified(labels=Y_train_val_categorical, test_size=Config.VALIDATION_SPLIT_SIZE)
+        Y_train_val_one_hot = self.dataset_labels_one_hot
+        Y_train_val_categorical = self.dataset_labels_categorical
 
         # VIDEO SNIPPET
-        X_train_snippet = np.take(X_train_val_snippet, indices=indices_train, axis=0)
-        X_val_snippet = np.take(X_train_val_snippet, indices=indices_val, axis=0)
+        X_train_snippet = X_train_val_snippet
         # VIDEO TAGS
         # X_train_video_tags = np.take(X_train_val_video_tags, indices=indices_train, axis=0)
         # X_val_video_tags = np.take(X_train_val_video_tags, indices=indices_val, axis=0)
         # VIDEO TRANSCRIPT
-        X_train_transcript = np.take(X_train_val_transcript, indices=indices_train, axis=0)
-        X_val_transcript = np.take(X_train_val_transcript, indices=indices_val, axis=0)
+        X_train_transcript = X_train_val_transcript
         # VIDEO COMMENTS
-        X_train_comments = np.take(X_train_val_comments, indices=indices_train, axis=0)
-        X_val_comments = np.take(X_train_val_comments, indices=indices_val, axis=0)
+        X_train_comments = X_train_val_comments
 
         # VIDEO LABELS
-        Y_val_labels = np.take(Y_train_val_labels, indices=indices_val, axis=0)
-        Y_train_one_hot = np.take(Y_train_val_one_hot, indices=indices_train, axis=0)
-        Y_val_one_hot = np.take(Y_train_val_one_hot, indices=indices_val, axis=0)
-        Y_train_categorical = np.take(Y_train_val_categorical, indices=indices_train, axis=0)
+        Y_train_one_hot = Y_train_val_one_hot
+        Y_train_categorical = Y_train_val_categorical
         # Y_val_categorical = np.take(Y_train_val_categorical, indices=indices_val, axis=0)
 
         """ OVERSAMPLING """
@@ -433,7 +426,7 @@ class ClassifierTraining(object):
             X_train_transcript, Y_train_s = smote.fit_resample(X_train_transcript, Y_train_categorical)
             X_train_comments, Y_train_s = smote.fit_resample(X_train_comments, Y_train_categorical)
             Y_train_oversampled = np.array([to_categorical(label, Config.NB_CLASSES) for label in Y_train_s])
-            print('--- [AFTER OVER-SAMPLING] TRAIN: %d, VAL: %d' % (Y_train_oversampled.shape[0], Y_val_labels.shape[0]))
+            print('--- [AFTER OVER-SAMPLING] TRAIN: %d' % (Y_train_oversampled.shape[0]))
         else:
             Y_train_oversampled = Y_train_one_hot
 
@@ -449,36 +442,26 @@ class ClassifierTraining(object):
         if Config.INPUT_FEATURES_CONFIG['video_comments']:
             model_train_input.append(X_train_comments)
 
-        # VALIDATION SET INPUT
-        model_val_input = list()
-        if Config.INPUT_FEATURES_CONFIG['video_snippet']:
-            model_val_input.append(X_val_snippet)
-        # if Config.INPUT_FEATURES_CONFIG['video_tags']:
-        #     model_val_input.append(X_val_video_tags)
-        if Config.INPUT_FEATURES_CONFIG['video_transcript']:
-            model_val_input.append(X_val_transcript)
-        if Config.INPUT_FEATURES_CONFIG['video_comments']:
-            model_val_input.append(X_val_comments)
-
         # Load Deep Learning Model
         print('\n--- Classifier Training started...')
         model = self.DEEP_LEARNING_MODEL_OBJ.get_model()
         print(len(model_train_input))
-        print(model_val_input)
-        model.fit(model_train_input,
+        print(np.array(model_train_input).shape)
+        model.fit([np.array(l) for l in model_train_input],
                     Y_train_oversampled,
                     epochs=Config.NB_EPOCHS,
                     batch_size=Config.BATCH_SIZE,
-                #   validation_data=[model_val_input, Y_val_one_hot],
                     shuffle=Config.SHUFFLE_TRAIN_SET,
                     verbose=1,
                     callbacks=[self.early_stopper])
 
         """ SAVE TRAINED MODEL """
-        print('\n---[K-FOLD {}] Model Training finished. Saving...'.format(kfold_counter))
-        final_model_store_path = '{0}/K={1}_pseudoscience_model.hdf5'.format(self.TRAINING_MODELS_BASE_DIR, kfold_counter)
+        print('\n--- Model Training finished. Saving...')
+        final_model_store_path = '{0}/final.hdf5'.format(self.TRAINING_MODELS_BASE_DIR)
         # Save the whole Model with its weights
+        print('saving', final_model_store_path)
         model.save(final_model_store_path)
+        print('done')
 
     def store_kfold_predictions(self, y_true, predicted_probas, kfold_counter):
         """

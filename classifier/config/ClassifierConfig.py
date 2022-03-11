@@ -5,7 +5,7 @@ class Config(object):
     Static class that contains the configuration of our Pseudoscientific Content Detection Classifier
     """
     # General Config Variables
-    NB_CLASSES = 2  # total number of classes
+    NB_CLASSES = 3  # total number of classes
 
     # Enable/Disable Model Branches
     INPUT_FEATURES_CONFIG = {

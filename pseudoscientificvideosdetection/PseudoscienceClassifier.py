@@ -3,6 +3,7 @@
 import os
 import numpy as np
 from decimal import Decimal
+from numpy.core.fromnumeric import argmax
 from tensorflow.keras.models import load_model
 from dataset.DatasetUtils import DatasetUtils
 import fasttext
@@ -27,9 +28,9 @@ class PseudoscienceClassifier(object):
             os.environ["CUDA_VISIBLE_DEVICES"] = ""
 
         # Initialize Variables
-        self.NB_CLASSES = 2
+        self.NB_CLASSES = 3
         # self.CLASSES = ['science', 'pseudoscience']
-        self.CLASSES = ['debunking', 'promoting']
+        self.CLASSES = ['debunking', 'promoting', 'neutral']
 
         # Create a Dataset Object
         self.DATASET = DatasetUtils()
@@ -139,17 +140,18 @@ class PseudoscienceClassifier(object):
 
         # Perform Classification
         predicted_proba = self.PSEUDOSCIENCE_CLASSIFIER.predict(classifier_input, batch_size=1)
+        print(predicted_proba)
 
         # Decode Predicted probability and convert it to a Label
         if self.CLASSIFICATION_THRESHOLD is not None:
-
-            pseudoscience_probability = np.round(predicted_proba.item(1), decimals=3)
+            max_i = predicted_proba.argmax(axis=-1)[0]
+            probability = np.round(predicted_proba.item(max_i), decimals=3)
             # Check the Pseudoscience Probability against the Classification Threshold
-            if Decimal(pseudoscience_probability) >= Decimal(self.CLASSIFICATION_THRESHOLD):
+            if Decimal(probability) >= Decimal(self.CLASSIFICATION_THRESHOLD):
                 # PSEUDOSCIENCE is the correct class
-                predicted_class = self.CLASSES[1]
+                predicted_class = self.CLASSES[max_i]
             else:
-                predicted_class = self.CLASSES[0]
+                predicted_class = "neutral"
         else:
             # Convert probability to class offset
             prediction = predicted_proba.argmax(axis=-1)
@@ -157,10 +159,15 @@ class PseudoscienceClassifier(object):
             predicted_class = self.CLASSES[prediction[0]]
 
         # Convert probabilities to float
-        science_proba = np.round(predicted_proba.item(0), decimals=3)
-        pseudoscience_proba = np.round(predicted_proba.item(1), decimals=3)
+        probabilities = {
+            label: np.round(predicted_proba.item(i), decimals=3)
+            for i, label in enumerate(self.CLASSES)
+        }
+        # science_proba = np.round(predicted_proba.item(0), decimals=3)
+        # pseudoscience_proba = np.round(predicted_proba.item(1), decimals=3)
         # print('--- [VIDEO_ID: {}] PREDICTED CLASS: {}, PROBAS: [{}, {}]\n'.format(video_details['id'], predicted_class.upper(), science_proba, pseudoscience_proba))
 
         # Find the appropriate Confidence Score
-        conf_score = science_proba if predicted_class == 'debunking' else pseudoscience_proba
+        conf_score = probabilities[predicted_class]
+        # conf_score = science_proba if predicted_class == 'debunking' else pseudoscience_proba
         return predicted_class, conf_score

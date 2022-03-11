@@ -107,7 +107,8 @@ class DatasetUtils(object):
         label_mapping = {
             'promoting': 'promoting',
             'debunking': 'debunking',
-            'neutral': 'debunking'
+            # 'neutral': 'debunking'
+            'neutral': 'neutral'
         }
 
         video_labels = list()
@@ -125,7 +126,8 @@ class DatasetUtils(object):
         label_mapping = {
             'promoting': 'promoting',
             'debunking': 'debunking',
-            'neutral': 'debunking'
+            # 'neutral': 'debunking'
+            'neutral': 'neutral'
         }
         ground_truth_labels = [label_mapping[video['annotation']['label']] for video in groundtruth_videos]
 
@@ -485,23 +487,31 @@ class DatasetUtils(object):
         :return: indices_train, indices_test
         """
         # Get the indices of the Science all_videos
-        indices_science = [i for i, x in enumerate(labels) if x == 0.0]
+        indices = [i for i, x in enumerate(labels)]
 
-        # Get the indices of the Pseudoscience all_videos
-        indices_pseudoscience = [i for i, x in enumerate(labels) if x == 1.0]
-
-        #
-        # Create the TRAIN and the TEST Sets
-        #
-        # SCIENCE
-        total_science_train = int(len(indices_science) * (1 - test_size))
-        indices_train = indices_science[0:total_science_train]
-        indices_test = indices_science[total_science_train:len(indices_science)]
-
-        # PSEUDOSCIENCE
-        total_pseudoscience_train = int(len(indices_pseudoscience) * (1 - test_size))
-        indices_train += indices_pseudoscience[0:total_pseudoscience_train]
-        indices_test += indices_pseudoscience[total_pseudoscience_train:len(indices_pseudoscience)]
-
-        print('TOTAL VIDEOS: {} | TRAIN: {}, TEST: {}'.format(len(labels), len(indices_train), len(indices_test)))
+        total_science_train = int(len(indices) * (1 - test_size))
+        indices_train = indices[0:total_science_train]
+        indices_test = indices[total_science_train:len(indices)]
         return indices_train, indices_test
+
+        # # Get the indices of the Science all_videos
+        # indices_science = [i for i, x in enumerate(labels) if x == 0.0]
+
+        # # Get the indices of the Pseudoscience all_videos
+        # indices_pseudoscience = [i for i, x in enumerate(labels) if x == 1.0]
+
+        # #
+        # # Create the TRAIN and the TEST Sets
+        # #
+        # # SCIENCE
+        # total_science_train = int(len(indices_science) * (1 - test_size))
+        # indices_train = indices_science[0:total_science_train]
+        # indices_test = indices_science[total_science_train:len(indices_science)]
+
+        # # PSEUDOSCIENCE
+        # total_pseudoscience_train = int(len(indices_pseudoscience) * (1 - test_size))
+        # indices_train += indices_pseudoscience[0:total_pseudoscience_train]
+        # indices_test += indices_pseudoscience[total_pseudoscience_train:len(indices_pseudoscience)]
+
+        # print('TOTAL VIDEOS: {} | TRAIN: {}, TEST: {}'.format(len(labels), len(indices_train), len(indices_test)))
+        # return indices_train, indices_test
