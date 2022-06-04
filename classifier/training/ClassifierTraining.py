@@ -152,6 +152,14 @@ class ClassifierTraining(object):
             Y_test_one_hot = np.take(self.dataset_labels_one_hot, indices=test_set_indices, axis=0)
             # Y_test_categorical = np.take(self.dataset_labels_categorical, indices=test_set_indices, axis=0)
 
+            """ STORE INDICES """
+            train_val_set_videos = np.take(self.dataset_videos, indices=train_val_set_indices, axis=0)
+            test_set_videos = np.take(self.dataset_videos, indices=test_set_indices, axis=0)
+            pickle.dump(train_val_set_indices, open('{0}/K={1}_train_val_set_indices'.format(self.TRAINING_MODELS_BASE_DIR, kfold_counter), 'wb'))
+            pickle.dump(test_set_indices, open('{0}/K={1}_test_set_indices'.format(self.TRAINING_MODELS_BASE_DIR, kfold_counter), 'wb'))
+            pickle.dump(train_val_set_videos, open('{0}/K={1}_train_val_set_videos'.format(self.TRAINING_MODELS_BASE_DIR, kfold_counter), 'wb'))
+            pickle.dump(test_set_videos, open('{0}/K={1}_test_set_videos'.format(self.TRAINING_MODELS_BASE_DIR, kfold_counter), 'wb'))
+
             """ TRAIN & VALIDATION SETS """
             indices_train, indices_val = self.DATASET.split_train_test_sets_stratified(labels=Y_train_val_categorical, test_size=Config.VALIDATION_SPLIT_SIZE)
 

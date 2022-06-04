@@ -88,13 +88,17 @@ class DatasetUtils(object):
         # Write the provided data (bytes) in the created file
         pickle.dump(data, open(filename, 'wb'), protocol=protocol)
         return
+        
+    def get_groundtruth_videos_col(self):
+        groundtruth_videos = self.groundtruth_videos_col.find({'annotation.label': {'$in': ['promoting', 'debunking', 'neutral']}})
+        return groundtruth_videos
 
     def get_groundtruth_videos(self):
         """
         Method that returns the ids of the Ground-truth videos
         :return:
         """
-        groundtruth_videos = self.groundtruth_videos_col.find({'annotation.label': {'$in': ['promoting', 'debunking', 'neutral']}})
+        groundtruth_videos = self.get_groundtruth_videos_col()
         return [video['id'] for video in groundtruth_videos]
 
     def get_groundtruth_labels(self):
@@ -102,7 +106,7 @@ class DatasetUtils(object):
         Method that returns the labels of our Ground Truth Videos
         :return:
         """
-        groundtruth_videos = self.groundtruth_videos_col.find({'annotation.label': {'$in': ['promoting', 'debunking', 'neutral']}})
+        groundtruth_videos = self.get_groundtruth_videos_col()
 
         label_mapping = {
             'promoting': 'promoting',
@@ -122,7 +126,7 @@ class DatasetUtils(object):
         :param perform_one_hot:
         :return:
         """
-        groundtruth_videos = self.groundtruth_videos_col.find({'annotation.label': {'$in': ['promoting', 'debunking', 'neutral']}})
+        groundtruth_videos = self.get_groundtruth_videos_col()
         label_mapping = {
             'promoting': 'promoting',
             'debunking': 'debunking',
