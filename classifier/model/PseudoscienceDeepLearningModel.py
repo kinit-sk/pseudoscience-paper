@@ -55,7 +55,7 @@ class PseudoscienceDeepLearningModel(object):
             video_comments_model_branch = Sequential()
             # Add Input Layer
             video_comments_model_branch.add(InputLayer(input_shape=(Config.EMBESSING_DIM,), name='video_comments_input'))
-            video_comments_model_branch.add(Flatten())
+            # video_comments_model_branch.add(Flatten())
 
         """ [FUSING NETWORK] Concatenate All Model Branches """
         # Get Models Branches output
@@ -125,7 +125,7 @@ class PseudoscienceDeepLearningModel(object):
         # Compile the Model
         full_deep_learning_model.compile(loss=Config.LOSS_FUNCTION, optimizer=optimizer, metrics=['accuracy'])
         # Summarize the Model
-        print(full_deep_learning_model.summary())
+        #print(full_deep_learning_model.summary())
         return full_deep_learning_model
 
     def get_model(self):
@@ -134,3 +134,6 @@ class PseudoscienceDeepLearningModel(object):
         :return: Keras model
         """
         return self.model
+
+    def summarize_model(self):
+        print(self.model.summary())
