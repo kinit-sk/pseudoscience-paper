@@ -58,6 +58,7 @@ class ClassifierTraining(object):
 
         # Create a Pseudoscience Model Object
         self.DEEP_LEARNING_MODEL_OBJ = PseudoscienceDeepLearningModel()
+        self.DEEP_LEARNING_MODEL_OBJ.summarize_model()
 
         # Get Dataset Videos and their Labels
         self.dataset_videos = self.DATASET.get_groundtruth_videos()
@@ -124,13 +125,17 @@ class ClassifierTraining(object):
 
             """ TRAIN SET """
             # VIDEO SNIPPET
-            X_train_val_snippet = np.take(self.video_snippet_features, indices=train_val_set_indices, axis=0)
+            if Config.INPUT_FEATURES_CONFIG['video_snippet']:
+                X_train_val_snippet = np.take(self.video_snippet_features, indices=train_val_set_indices, axis=0)
             # VIDEO TAGS
-            # X_train_val_video_tags = np.take(self.video_tags_features, indices=train_val_set_indices, axis=0)
+            # if Config.INPUT_FEATURES_CONFIG['video_tags']:
+            #   X_train_val_video_tags = np.take(self.video_tags_features, indices=train_val_set_indices, axis=0)
             # VIDEO TRANSCRIPT
-            X_train_val_transcript = np.take(self.video_transcript_features, indices=train_val_set_indices, axis=0)
+            if Config.INPUT_FEATURES_CONFIG['video_transcript']:
+                X_train_val_transcript = np.take(self.video_transcript_features, indices=train_val_set_indices, axis=0)
             # VIDEO COMMENTS
-            X_train_val_comments = np.take(self.video_comments_features, indices=train_val_set_indices, axis=0)
+            if Config.INPUT_FEATURES_CONFIG['video_comments']:
+                X_train_val_comments = np.take(self.video_comments_features, indices=train_val_set_indices, axis=0)
 
             # VIDEO LABELS
             Y_train_val_labels = np.take(self.dataset_labels, indices=train_val_set_indices, axis=0)
@@ -139,13 +144,17 @@ class ClassifierTraining(object):
 
             """ TEST SET """
             # VIDEO SNIPPET
-            X_test_snippet = np.take(self.video_snippet_features, indices=test_set_indices, axis=0)
+            if Config.INPUT_FEATURES_CONFIG['video_snippet']:
+                X_test_snippet = np.take(self.video_snippet_features, indices=test_set_indices, axis=0)
             # VIDEO TAGS
-            # X_test_video_tags = np.take(self.video_tags_features, indices=test_set_indices, axis=0)
+            # if Config.INPUT_FEATURES_CONFIG['video_tags']:
+            #   X_test_video_tags = np.take(self.video_tags_features, indices=test_set_indices, axis=0)
             # VIDEO TRANSCRIPT
-            X_test_transcript = np.take(self.video_transcript_features, indices=test_set_indices, axis=0)
+            if Config.INPUT_FEATURES_CONFIG['video_transcript']:
+                X_test_transcript = np.take(self.video_transcript_features, indices=test_set_indices, axis=0)
             # VIDEO COMMENTS
-            X_test_comments = np.take(self.video_comments_features, indices=test_set_indices, axis=0)
+            if Config.INPUT_FEATURES_CONFIG['video_comments']:
+                X_test_comments = np.take(self.video_comments_features, indices=test_set_indices, axis=0)
 
             # VIDEO LABELS
             Y_test_labels = np.take(self.dataset_labels, indices=test_set_indices, axis=0)
@@ -164,17 +173,21 @@ class ClassifierTraining(object):
             indices_train, indices_val = self.DATASET.split_train_test_sets_stratified(labels=Y_train_val_categorical, test_size=Config.VALIDATION_SPLIT_SIZE)
 
             # VIDEO SNIPPET
-            X_train_snippet = np.take(X_train_val_snippet, indices=indices_train, axis=0)
-            X_val_snippet = np.take(X_train_val_snippet, indices=indices_val, axis=0)
+            if Config.INPUT_FEATURES_CONFIG['video_snippet']:
+                X_train_snippet = np.take(X_train_val_snippet, indices=indices_train, axis=0)
+                X_val_snippet = np.take(X_train_val_snippet, indices=indices_val, axis=0)
             # VIDEO TAGS
-            # X_train_video_tags = np.take(X_train_val_video_tags, indices=indices_train, axis=0)
-            # X_val_video_tags = np.take(X_train_val_video_tags, indices=indices_val, axis=0)
+            # if Config.INPUT_FEATURES_CONFIG['video_tags']:
+            #   X_train_video_tags = np.take(X_train_val_video_tags, indices=indices_train, axis=0)
+            #   X_val_video_tags = np.take(X_train_val_video_tags, indices=indices_val, axis=0)
             # VIDEO TRANSCRIPT
-            X_train_transcript = np.take(X_train_val_transcript, indices=indices_train, axis=0)
-            X_val_transcript = np.take(X_train_val_transcript, indices=indices_val, axis=0)
+            if Config.INPUT_FEATURES_CONFIG['video_transcript']:
+                X_train_transcript = np.take(X_train_val_transcript, indices=indices_train, axis=0)
+                X_val_transcript = np.take(X_train_val_transcript, indices=indices_val, axis=0)
             # VIDEO COMMENTS
-            X_train_comments = np.take(X_train_val_comments, indices=indices_train, axis=0)
-            X_val_comments = np.take(X_train_val_comments, indices=indices_val, axis=0)
+            if Config.INPUT_FEATURES_CONFIG['video_comments']:
+                X_train_comments = np.take(X_train_val_comments, indices=indices_train, axis=0)
+                X_val_comments = np.take(X_train_val_comments, indices=indices_val, axis=0)
 
             # VIDEO LABELS
             Y_val_labels = np.take(Y_train_val_labels, indices=indices_val, axis=0)
@@ -189,10 +202,14 @@ class ClassifierTraining(object):
                 smote = SMOTE(sampling_strategy='not majority')
 
                 # Oversample VIDEO SNIPPET
-                X_train_snippet, Y_train_s = smote.fit_resample(X_train_snippet, Y_train_categorical)
-                # X_train_video_tags, Y_train_s = smote.fit_resample(X_train_video_tags, Y_train_categorical)
-                X_train_transcript, Y_train_s = smote.fit_resample(X_train_transcript, Y_train_categorical)
-                X_train_comments, Y_train_s = smote.fit_resample(X_train_comments, Y_train_categorical)
+                if Config.INPUT_FEATURES_CONFIG['video_snippet']:
+                    X_train_snippet, Y_train_s = smote.fit_resample(X_train_snippet, Y_train_categorical)
+                # if Config.INPUT_FEATURES_CONFIG['video_tags']:
+                #   X_train_video_tags, Y_train_s = smote.fit_resample(X_train_video_tags, Y_train_categorical)
+                if Config.INPUT_FEATURES_CONFIG['video_transcript']:
+                    X_train_transcript, Y_train_s = smote.fit_resample(X_train_transcript, Y_train_categorical)
+                if Config.INPUT_FEATURES_CONFIG['video_comments']:
+                    X_train_comments, Y_train_s = smote.fit_resample(X_train_comments, Y_train_categorical)
                 Y_train_oversampled = np.array([to_categorical(label, Config.NB_CLASSES) for label in Y_train_s])
                 print('--- [AFTER OVER-SAMPLING] TRAIN: %d, VAL: %d, TEST: %d' % (Y_train_oversampled.shape[0], Y_val_labels.shape[0], Y_test_labels.shape[0]))
             else:
@@ -211,18 +228,23 @@ class ClassifierTraining(object):
             """ TRAIN THE MODEL """
             # TRAIN SET INPUT
             model_train_input = list()
+            model_val_input = list()
             if Config.INPUT_FEATURES_CONFIG['video_snippet']:
                 model_train_input.append(X_train_snippet)
+                model_val_input.append(X_val_snippet)
             # if Config.INPUT_FEATURES_CONFIG['video_tags']:
             #     model_train_input.append(X_train_video_tags)
+            #     model_val_input.append(X_val_video_tags)
             if Config.INPUT_FEATURES_CONFIG['video_transcript']:
                 model_train_input.append(X_train_transcript)
+                model_val_input.append(X_val_transcript)
             if Config.INPUT_FEATURES_CONFIG['video_comments']:
                 model_train_input.append(X_train_comments)
+                model_val_input.append(X_val_comments)
 
             # Load Deep Learning Model
             print('\n--- Classifier Training started...')
-            model = self.DEEP_LEARNING_MODEL_OBJ.get_model()
+            model = PseudoscienceDeepLearningModel().get_model()
             print(Y_train_oversampled)
             model.fit(model_train_input,
                       Y_train_oversampled,
@@ -230,8 +252,8 @@ class ClassifierTraining(object):
                       batch_size=Config.BATCH_SIZE,
                     #   validation_data=[model_val_input, Y_val_one_hot],
                       shuffle=Config.SHUFFLE_TRAIN_SET,
-                      verbose=1,
-                      callbacks=[self.early_stopper])
+                      verbose=1,)
+                    #  callbacks=[self.early_stopper])
 
             """ SAVE TRAINED MODEL """
             print('\n---[K-FOLD {}] Model Training finished. Saving...'.format(kfold_counter))
@@ -258,6 +280,8 @@ class ClassifierTraining(object):
 
             print('--- Making Predictions on the TEST SET...')
             test_pred_proba = pseudoscience_model.predict(model_test_input, batch_size=Config.BATCH_SIZE, verbose=1, steps=None)
+            del pseudoscience_model
+            
             if Config.CLASSIFICATION_THRESHOLD is not None:
                 test_predicted_classes = list()
                 for predicted_probas in test_pred_proba:

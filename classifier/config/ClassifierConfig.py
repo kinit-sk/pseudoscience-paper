@@ -17,18 +17,18 @@ class Config(object):
 
     # Build Deep Learning Model Config
     MODEL_DROPOUT = 0.5
-    LEARNING_RATE = 1e-3
+    LEARNING_RATE = 1e-4
     LOSS_FUNCTION = 'categorical_crossentropy'  # 'binary_crossentropy' or 'categorical_crossentropy'
     EMBESSING_DIM = 300
 
     # Train Model Config
     SHUFFLE_TRAIN_SET = True
     OVERSAMPLING = True
-    VALIDATION_SPLIT_SIZE = 0.1
+    VALIDATION_SPLIT_SIZE = 0
 
     TOTAL_KFOLDS = 10  # number of k-folds (cross-validation)
-    NB_EPOCHS = 100
-    BATCH_SIZE = 20
+    NB_EPOCHS = 1000
+    BATCH_SIZE = 512
 
     # Model Performance Calculation Config
     CLASSIFICATION_THRESHOLD = 0.7

@@ -125,7 +125,7 @@ class PseudoscienceDeepLearningModel(object):
         # Compile the Model
         full_deep_learning_model.compile(loss=Config.LOSS_FUNCTION, optimizer=optimizer, metrics=['accuracy'])
         # Summarize the Model
-        print(full_deep_learning_model.summary())
+        #print(full_deep_learning_model.summary())
         return full_deep_learning_model
 
     def get_model(self):
@@ -134,3 +134,6 @@ class PseudoscienceDeepLearningModel(object):
         :return: Keras model
         """
         return self.model
+
+    def summarize_model(self):
+        print(self.model.summary())
