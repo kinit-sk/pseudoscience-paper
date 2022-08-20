@@ -452,7 +452,7 @@ class DatasetUtils(object):
         """
         preprocessed_video_comments = list()
         for comment in video_comments:
-            preprocessed_video_comments.append(self.preprocess_text(text=comment))
+            preprocessed_video_comments.append(self.preprocess_text(text=str(comment)))
         return preprocessed_video_comments
 
     def get_video_comments_features(self):

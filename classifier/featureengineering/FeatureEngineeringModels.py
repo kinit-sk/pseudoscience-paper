@@ -66,7 +66,8 @@ class FeatureEngineeringModels(object):
         if not os.path.isfile(fasttext_model_filename) or overwrite:
             # Train unspervised fastText model
             model = fasttext.train_unsupervised(input='{0}/{1}_train_data.txt'.format(self.DATA_DIR, model_type),
-                                                pretrainedVectors='wiki-news-300d-1M.vec',
+                                                #pretrainedVectors='wiki-news-300d-1M.vec',
+                                                pretrainedVectors='pseudoscientificvideosdetection/models/feature_extraction/wiki-news-300d-1M.vec',
                                                 dim=300,
                                                 minn=2,
                                                 maxn=5,

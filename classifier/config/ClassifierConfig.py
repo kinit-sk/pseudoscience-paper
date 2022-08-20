@@ -18,7 +18,7 @@ class Config(object):
     # Build Deep Learning Model Config
     MODEL_DROPOUT = 0.5
     LEARNING_RATE = 1e-3
-    LOSS_FUNCTION = 'binary_crossentropy'  # 'binary_crossentropy' or 'categorical_crossentropy'
+    LOSS_FUNCTION = 'categorical_crossentropy'  # 'binary_crossentropy' or 'categorical_crossentropy'
     EMBESSING_DIM = 300
 
     # Train Model Config
