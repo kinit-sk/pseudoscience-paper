@@ -218,7 +218,7 @@ class YouTubeVideoDownloader(object):
         :return:
         """
         video_url = "https://www.youtube.com/watch?v={}".format(video_id)
-        path = "'{0}/{1}/%(id)s.%(ext)s'".format(self.VIDEO_TRANSCRIPT_BASE_DIR, video_id)
+        path = "{0}/{1}/%(id)s.%(ext)s".format(self.VIDEO_TRANSCRIPT_BASE_DIR, video_id)
 
         # Create directory where we will store the video's transcript before proceeding
         original_umask = os.umask(0)
