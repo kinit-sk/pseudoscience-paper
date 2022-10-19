@@ -21,7 +21,11 @@ If you make use of the modified classification model (any of the three versions 
     title={Auditing YouTube's Recommendation Algorithm for Misinformation Filter Bubbles},
     author={Srba, Ivan and Moro, Robert and Tomlein, Matus and Pecher, Branislav and Simko, Jakub and Stefancova, Elena and Kompan, Michal and Hrckova, Andrea and Podrouzek, Juraj and Gavornik, Adrain and Bielikova, Maria},
     journal={ACM Transactions on Recommender Systems},
-    year={2022}
+    year={2022},
+    volume={1},
+    number={1},
+    doi={10.1145/3568392},
+    url={https://doi.org/10.1145/3568392}
 }
 ```
 
